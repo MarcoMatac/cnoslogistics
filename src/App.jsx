@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Users, Settings, LogOut, School, 
   ChevronLeft, ChevronRight, Filter, X, Plus, 
-  Lock, Eye, Edit2, ShieldAlert, DoorOpen, Tv, Wifi, Monitor, PenTool, Network, Key, Trash2, CalendarDays, Menu, History, ServerCrash
+  Lock, Eye, Edit2, ShieldAlert, DoorOpen, Tv, Wifi, Monitor, PenTool, Network, Key, Trash2, CalendarDays, Menu, History, ServerCrash, CheckCircle2, Bookmark, Lightbulb
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, parseISO, isWeekend } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -13,6 +13,39 @@ import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, setDoc, writ
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
+}
+
+// ----------------------------------------------------------------------
+// MODULO: ERROR BOUNDARY (Scudo Anti Schermata Bianca)
+// ----------------------------------------------------------------------
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Scudo ErrorBoundary ha intercettato un crash:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+          <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center border border-red-200">
+            <ServerCrash size={48} className="mx-auto text-red-500 mb-4" />
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Ops! Incongruenza Dati</h2>
+            <p className="text-slate-600 mt-2 font-medium text-sm">L'interfaccia ha incontrato un errore durante l'aggiornamento in tempo reale. I tuoi dati nel database sono al sicuro.</p>
+            <button onClick={() => window.location.reload()} className="mt-6 w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
+              Ricarica Applicazione
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -40,9 +73,9 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO PRINCIPALE: CORE APP & ROUTING CON ERROR HANDLING
+// MODULO PRINCIPALE: CORE APP & ROUTING
 // ----------------------------------------------------------------------
-export default function App() {
+function MainApp() {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentView, setCurrentView] = useState('calendar'); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -52,14 +85,13 @@ export default function App() {
   const [rooms, setRooms] = useState([]);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [dbError, setDbError] = useState(null); // Nuovo stato per intercettare crash di Firebase
+  const [dbError, setDbError] = useState(null);
 
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    // Gestione di caricamento sicuro e parallelo
     let uLoaded = false, rLoaded = false, bLoaded = false;
     const checkReady = () => { if (uLoaded && rLoaded && bLoaded) setIsLoading(false); };
 
@@ -116,7 +148,6 @@ export default function App() {
     setCurrentView(view); setIsMobileMenuOpen(false);
   };
 
-  // VISTA ERRORE DATABASE (Sostituisce il caricamento infinito)
   if (dbError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -124,10 +155,6 @@ export default function App() {
           <ServerCrash size={48} className="mx-auto text-red-500 mb-4" />
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Sistema Offline</h2>
           <p className="text-slate-600 mt-2 font-medium">{dbError}</p>
-          <div className="mt-6 p-4 bg-slate-50 rounded-xl text-sm text-slate-500 border border-slate-100 text-left">
-            <strong className="block text-slate-700 mb-1">Come risolvere:</strong>
-            Vai su Firebase &gt; Firestore Database &gt; Regole, e assicurati che sia impostato: <code className="block mt-1 bg-white p-2 rounded text-red-600 font-mono text-xs shadow-sm">allow read, write: if true;</code>
-          </div>
           <button onClick={() => window.location.reload()} className="mt-6 w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">
             Riprova Connessione
           </button>
@@ -136,7 +163,6 @@ export default function App() {
     );
   }
 
-  // VISTA CARICAMENTO
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -145,7 +171,6 @@ export default function App() {
     );
   }
 
-  // VISTA LOGIN
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
@@ -177,12 +202,11 @@ export default function App() {
     );
   }
 
-  // Guardia di routing
+  // Guardia di routing protettiva
   if (currentUser.role !== 'Master' && (currentView === 'rooms' || currentView === 'users')) {
     setCurrentView('calendar');
   }
 
-  // --- STRUTTURA PRINCIPALE DELL'APP ---
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
       {isMobileMenuOpen && (
@@ -211,6 +235,9 @@ export default function App() {
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button onClick={() => navigateTo('calendar')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'calendar' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
             <Calendar size={18} /> Calendario Aule
+          </button>
+          <button onClick={() => navigateTo('my-bookings')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'my-bookings' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
+            <Bookmark size={18} /> Le Mie Prenotazioni
           </button>
           
           {currentUser.role === 'Master' && (
@@ -251,7 +278,7 @@ export default function App() {
         <header className="hidden lg:flex h-24 px-8 items-center justify-between border-b border-slate-200/50 bg-slate-50/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-              {currentView === 'calendar' ? 'Disponibilità Aule' : currentView === 'rooms' ? 'Gestione Parco Aule' : 'Controllo Accessi'}
+              {currentView === 'calendar' ? 'Disponibilità Aule' : currentView === 'my-bookings' ? 'Le Mie Prenotazioni' : currentView === 'rooms' ? 'Gestione Parco Aule' : 'Controllo Accessi'}
             </h2>
             <p className="text-sm font-medium text-slate-500 mt-1">Gestione dati centralizzata in tempo reale.</p>
           </div>
@@ -261,6 +288,8 @@ export default function App() {
           <div className="p-4 sm:p-6 lg:p-8 mx-auto max-w-7xl h-full animate-in fade-in duration-300">
             {currentView === 'calendar' ? (
               <CalendarView currentUser={currentUser} users={users} bookings={bookings} rooms={rooms} />
+            ) : currentView === 'my-bookings' ? (
+              <MyBookingsView currentUser={currentUser} bookings={bookings} rooms={rooms} />
             ) : currentView === 'rooms' && currentUser.role === 'Master' ? (
               <RoomsManagerView rooms={rooms} />
             ) : currentView === 'users' && currentUser.role === 'Master' ? (
@@ -269,6 +298,67 @@ export default function App() {
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// MODULO: LE MIE PRENOTAZIONI (VISTA UTENTE SINGOLO)
+// ----------------------------------------------------------------------
+function MyBookingsView({ currentUser, bookings, rooms }) {
+  const myBookings = bookings.filter(b => b.userId === currentUser.id).sort((a,b) => b.date.localeCompare(a.date));
+  const todayDate = format(new Date(), "yyyy-MM-dd");
+
+  const handleDeleteBooking = async (bookingId) => {
+    await deleteDoc(doc(db, "bookings", bookingId));
+  };
+
+  return (
+    <div className="bg-white rounded-2xl lg:rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px] flex flex-col">
+      <div className="p-5 sm:p-6 lg:p-8 border-b border-slate-100 bg-slate-50 shrink-0">
+        <h3 className="font-black text-xl lg:text-2xl text-slate-900">Storico e Prenotazioni Attive</h3>
+        <p className="text-sm font-medium text-slate-500 mt-1">Consulta e gestisci le aule che hai prenotato.</p>
+      </div>
+      
+      <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
+        {myBookings.length === 0 ? (
+          <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <Bookmark size={48} className="mx-auto text-slate-300 mb-4" />
+            <h3 className="text-lg font-black text-slate-700">Nessuna prenotazione</h3>
+            <p className="text-slate-500 font-medium text-sm mt-1">Non hai ancora prenotato nessuna aula.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {myBookings.map(booking => {
+              const room = rooms.find(r => r.id === booking.classroomId);
+              const isFuture = booking.date >= todayDate;
+              return (
+                <div key={booking.id} className={classNames("p-5 rounded-2xl border flex flex-col relative transition-all shadow-sm hover:shadow-md", isFuture ? "bg-white border-slate-200" : "bg-slate-50 border-slate-200 opacity-80")}>
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-black text-slate-900 text-lg leading-tight pr-4">{booking.courseName}</h4>
+                    <span className={classNames("text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md shrink-0", isFuture ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600")}>
+                      {isFuture ? 'In Arrivo' : 'Passata'}
+                    </span>
+                  </div>
+                  <div className="space-y-2 mt-auto">
+                    <div className="flex items-center gap-3 text-sm font-bold text-indigo-700 bg-indigo-50 p-2.5 rounded-xl border border-indigo-100">
+                      <CalendarDays size={16} /> {format(parseISO(booking.date), "dd/MM/yyyy")} <span className="text-indigo-300">|</span> {booking.startTime} - {booking.endTime}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
+                      <DoorOpen size={16} className="text-slate-400"/> {room?.name || 'Aula Rimosossa'}
+                    </div>
+                  </div>
+                  {isFuture && (
+                    <button onClick={() => handleDeleteBooking(booking.id)} className="absolute top-4 right-4 p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors shadow-sm active:scale-95">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -454,7 +544,7 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: FORM PRENOTAZIONE SINGOLA/MULTIPLA CON PROTEZIONE RACE CONDITIONS
+// MODULO: FORM PRENOTAZIONE (Con Smart Booking Engine e Suggestions)
 // ----------------------------------------------------------------------
 function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   const [formData, setFormData] = useState({ courseName: '', classroomId: '', startTime: '', endTime: '', specialRequests: '' });
@@ -464,7 +554,9 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   const [excludeSpecific, setExcludeSpecific] = useState(false);
   const [excludedDates, setExcludedDates] = useState([]);
   const [tempExcludeDate, setTempExcludeDate] = useState('');
-  const [formError, setFormError] = useState('');
+  
+  const [errorMsg, setErrorMsg] = useState('');
+  const [overlapData, setOverlapData] = useState(null); // Contiene dettagli conflitto e suggerimenti
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedRoomDetails = rooms.find(r => r.id === formData.classroomId);
@@ -475,9 +567,11 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   const handleRemoveExcludeDate = (dateToRemove) => { setExcludedDates(excludedDates.filter(d => d !== dateToRemove)); };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setFormError(''); setIsSubmitting(true);
-    if (formData.endTime <= formData.startTime) { setFormError("L'ora di fine deve essere successiva all'inizio."); setIsSubmitting(false); return; }
-    if (endDate < startDate) { setFormError("Data fine precedente a data inizio."); setIsSubmitting(false); return; }
+    e.preventDefault(); 
+    setErrorMsg(''); setOverlapData(null); setIsSubmitting(true);
+    
+    if (formData.endTime <= formData.startTime) { setErrorMsg("L'ora di fine deve essere successiva all'inizio."); setIsSubmitting(false); return; }
+    if (endDate < startDate) { setErrorMsg("Data fine precedente a data inizio."); setIsSubmitting(false); return; }
 
     try {
       const allDates = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });
@@ -488,18 +582,36 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         return true;
       });
 
-      if (validDates.length === 0) { setFormError("Nessuna data valida selezionata."); setIsSubmitting(false); return; }
+      if (validDates.length === 0) { setErrorMsg("Nessuna data valida selezionata."); setIsSubmitting(false); return; }
 
-      // PRE-FLIGHT CHECK
-      let overlapError = null;
+      // PRE-FLIGHT CHECK INTELLIGENTE
+      let overlapDetails = null;
+      let alternatives = [];
+
       for (let i = 0; i < validDates.length; i++) {
         const dateStr = format(validDates[i], "yyyy-MM-dd");
-        const isOverlapping = bookings.some(b => b.date === dateStr && b.classroomId === formData.classroomId && formData.startTime < b.endTime && formData.endTime > b.startTime);
-        if (isOverlapping) { overlapError = `Sovrapposizione rilevata! Aula occupata il ${format(validDates[i], "dd/MM/yyyy")} in questo orario.`; break; }
+        const conflictingBooking = bookings.find(b => b.date === dateStr && b.classroomId === formData.classroomId && formData.startTime < b.endTime && formData.endTime > b.startTime);
+        
+        if (conflictingBooking) { 
+          // Conflitto trovato. Cerchiamo aule alternative libere in questo esatto momento.
+          alternatives = rooms.filter(room => {
+            if (room.id === formData.classroomId) return false; // Ignora l'aula già occupata
+            const isAlternativeBooked = bookings.some(b => b.date === dateStr && b.classroomId === room.id && formData.startTime < b.endTime && formData.endTime > b.startTime);
+            return !isAlternativeBooked;
+          });
+          
+          overlapDetails = { date: dateStr, booking: conflictingBooking, alternatives };
+          break; // Ci fermiamo al primo conflitto per non confondere l'utente
+        }
       }
 
-      if (overlapError) { setFormError(overlapError); setIsSubmitting(false); return; }
+      if (overlapDetails) { 
+        setOverlapData(overlapDetails);
+        setIsSubmitting(false); 
+        return; 
+      }
 
+      // Se non ci sono conflitti, scriviamo su db
       const batch = writeBatch(db);
       for (let i = 0; i < validDates.length; i++) {
         const newBookingRef = doc(collection(db, "bookings"));
@@ -507,7 +619,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       }
       await batch.commit();
       onClose();
-    } catch (error) { setFormError("Errore durante il salvataggio."); }
+    } catch (error) { setErrorMsg("Errore durante il salvataggio."); }
     setIsSubmitting(false);
   };
 
@@ -523,20 +635,55 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-6">
-      {formError && (<div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-start sm:items-center gap-3 animate-in fade-in"><ShieldAlert size={20} className="shrink-0 mt-0.5 sm:mt-0" /> <span>{formError}</span></div>)}
+      
+      {/* MESSAGGI DI ERRORE GENERICI */}
+      {errorMsg && (<div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-center gap-3 animate-in fade-in"><ShieldAlert size={20} className="shrink-0" /> <span>{errorMsg}</span></div>)}
+      
+      {/* MOTORE INTELLIGENTE: PANNELLO SOVRAPPOSIZIONE E SUGGERIMENTI */}
+      {overlapData && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 animate-in slide-in-from-top-4 duration-300 shadow-sm">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="text-amber-600 shrink-0 mt-1" size={24} />
+            <div>
+              <h4 className="text-base font-black text-amber-900">Aula non disponibile!</h4>
+              <p className="text-sm font-medium text-amber-800 mt-1 leading-relaxed">
+                Il giorno <strong>{format(parseISO(overlapData.date), "dd/MM/yyyy")}</strong> dalle {formData.startTime} alle {formData.endTime}, l'aula è già occupata dal corso/evento: <strong>"{overlapData.booking.courseName}"</strong>.
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-5 bg-white rounded-xl p-4 border border-amber-100">
+            <h5 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-3">
+              <Lightbulb size={14} className="text-amber-500" /> Aule alternative libere
+            </h5>
+            {overlapData.alternatives.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {overlapData.alternatives.map(altRoom => (
+                  <button type="button" key={altRoom.id} onClick={() => {setFormData({...formData, classroomId: altRoom.id}); setOverlapData(null);}} className="inline-flex items-center bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200 hover:bg-indigo-50 transition-colors shadow-sm active:scale-95">
+                    Seleziona {altRoom.name}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm font-bold text-slate-500">Purtroppo non ci sono aule libere in quell'orario.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-bold text-slate-700 mb-1.5">Nome Attività</label>
-        <input required type="text" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.courseName} onChange={e => setFormData({...formData, courseName: e.target.value})} placeholder="Es. Riunione" />
+        <input required type="text" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.courseName} onChange={e => {setFormData({...formData, courseName: e.target.value}); setOverlapData(null);}} placeholder="Es. Riunione Docenti" />
       </div>
       <div>
         <label className="block text-sm font-bold text-slate-700 mb-1.5">Seleziona Aula</label>
-        <select required className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer" value={formData.classroomId} onChange={e => setFormData({...formData, classroomId: e.target.value})}>
+        <select required className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer" value={formData.classroomId} onChange={e => {setFormData({...formData, classroomId: e.target.value}); setOverlapData(null);}}>
           <option value="">Scegli un'aula disponibile...</option>
           {rooms.map(r => <option key={r.id} value={r.id}>{r.name} (Max {r.capacity})</option>)}
         </select>
-        {selectedRoomDetails && (
+        {selectedRoomDetails && !overlapData && (
           <div className="mt-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm animate-in fade-in slide-in-from-top-2">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2.5"><Tv size={14} /> Dotazioni Aula</span>
+            <span className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2.5"><Tv size={14} /> Dotazioni Aula Selezionata</span>
             <div className="flex flex-wrap gap-2">
               {selectedRoomDetails.equipment.lim && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Tv size={12}/> LIM</span>}
               {selectedRoomDetails.equipment.wifi && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Wifi size={12}/> WiFi</span>}
@@ -549,11 +696,11 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-1.5">Ora Inizio</label>
-          <input required type="time" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} />
+          <input required type="time" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.startTime} onChange={e => {setFormData({...formData, startTime: e.target.value}); setOverlapData(null);}} />
         </div>
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-1.5">Ora Fine</label>
-          <input required type="time" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} />
+          <input required type="time" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.endTime} onChange={e => {setFormData({...formData, endTime: e.target.value}); setOverlapData(null);}} />
         </div>
       </div>
 
@@ -562,21 +709,21 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Inizio Periodo</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={startDate} onChange={e => {setStartDate(e.target.value); setOverlapData(null);}} />
           </div>
           <div>
             <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Fine Periodo</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={endDate} onChange={e => {setEndDate(e.target.value); setOverlapData(null);}} />
           </div>
         </div>
 
         <div className="space-y-4 pt-2">
           <label className="flex items-center gap-3 cursor-pointer group bg-slate-50 p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
-            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeWeekends} onChange={e => setExcludeWeekends(e.target.checked)} />
+            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeWeekends} onChange={e => {setExcludeWeekends(e.target.checked); setOverlapData(null);}} />
             <span className="text-sm font-bold text-slate-700">Escludi Sabato e Domenica</span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer group bg-slate-50 p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
-            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeSpecific} onChange={e => setExcludeSpecific(e.target.checked)} />
+            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeSpecific} onChange={e => {setExcludeSpecific(e.target.checked); setOverlapData(null);}} />
             <span className="text-sm font-bold text-slate-700">Escludi giorni specifici (Festività)</span>
           </label>
           {excludeSpecific && (
@@ -611,7 +758,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: CANCELLAZIONE MASSIVA (Bulk Delete via Batch)
+// MODULO: CANCELLAZIONE MASSIVA SAFE (Bulk Delete via Batch)
 // ----------------------------------------------------------------------
 function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
   const [classroomId, setClassroomId] = useState('');
@@ -637,10 +784,14 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
         batch.delete(doc(db, "bookings", booking.id));
       });
       await batch.commit();
+      
       setStatusMsg(`Successo! Eliminate ${targetBookings.length} prenotazioni.`);
-      setTimeout(() => onClose(), 2000);
+      
+      // Svuotiamo lo stato per evitare crash di re-render prima della chiusura asincrona
+      setClassroomId(''); setStartDate(''); setEndDate('');
+      setTimeout(() => { if (onClose) onClose(); }, 2000);
     } catch (error) {
-      setStatusMsg("Errore durante l'eliminazione.");
+      setStatusMsg("Errore critico durante l'eliminazione.");
       setIsDeleting(false);
     }
   };
@@ -655,7 +806,7 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-1.5">Seleziona Aula da liberare</label>
-          <select required className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-red-500 outline-none cursor-pointer" value={classroomId} onChange={e => setClassroomId(e.target.value)}>
+          <select required disabled={isDeleting} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 focus:ring-2 focus:ring-red-500 outline-none cursor-pointer disabled:opacity-50" value={classroomId} onChange={e => setClassroomId(e.target.value)}>
             <option value="">Scegli aula...</option>
             {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
@@ -663,16 +814,16 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs font-black text-slate-400 uppercase mb-2">Dal Giorno</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <input required disabled={isDeleting} type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none disabled:opacity-50" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div>
             <label className="block text-xs font-black text-slate-400 uppercase mb-2">Al Giorno</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            <input required disabled={isDeleting} type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3.5 sm:py-3 text-sm font-bold focus:ring-2 focus:ring-red-500 outline-none disabled:opacity-50" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
         </div>
       </div>
 
-      {classroomId && startDate && endDate && (
+      {classroomId && startDate && endDate && !statusMsg && (
         <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-center animate-in zoom-in-95">
           <p className="text-sm font-bold text-slate-600">Prenotazioni trovate e cancellabili:</p>
           <p className="text-4xl font-black text-slate-900 mt-2">{targetBookings.length}</p>
@@ -680,14 +831,14 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
       )}
 
       {statusMsg && (
-        <div className="p-4 bg-green-50 text-green-700 rounded-2xl border border-green-200 text-center font-bold text-sm flex items-center justify-center gap-2">
+        <div className="p-4 bg-green-50 text-green-700 rounded-2xl border border-green-200 text-center font-bold text-sm flex items-center justify-center gap-2 animate-in slide-in-from-bottom-2">
           <CheckCircle2 size={18} /> {statusMsg}
         </div>
       )}
 
       <div className="pt-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 border-t border-slate-100">
-        <button type="button" onClick={onClose} className="w-full sm:w-auto px-6 py-3.5 sm:py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">Annulla</button>
-        <button type="button" onClick={handleBulkDelete} disabled={targetBookings.length === 0 || isDeleting} className="w-full sm:w-auto px-8 py-3.5 sm:py-3 text-sm font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:hover:bg-red-600 rounded-xl flex justify-center gap-2 items-center shadow-lg shadow-red-200 transition-transform active:scale-[0.98]">
+        <button type="button" onClick={onClose} disabled={isDeleting} className="w-full sm:w-auto px-6 py-3.5 sm:py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl disabled:opacity-50">Annulla</button>
+        <button type="button" onClick={handleBulkDelete} disabled={targetBookings.length === 0 || isDeleting} className="w-full sm:w-auto px-8 py-3.5 sm:py-3 text-sm font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 rounded-xl flex justify-center gap-2 items-center shadow-lg shadow-red-200 transition-transform active:scale-[0.98]">
           {isDeleting ? 'Eliminazione in corso...' : 'Conferma Eliminazione'}
         </button>
       </div>
@@ -696,7 +847,7 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: GESTIONE UTENTI E RECAP
+// MODULO: GESTIONE UTENTI (Con Storico Modal)
 // ----------------------------------------------------------------------
 function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -766,7 +917,7 @@ function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms 
           {viewingUser && bookings.filter(b => b.userId === viewingUser.id).length === 0 ? (
             <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                <CalendarDays size={32} className="mx-auto text-slate-300 mb-3" />
-               <p className="text-slate-500 font-bold text-sm">Nessuna prenotazione per questo utente.</p>
+               <p className="text-slate-500 font-bold text-sm">Nessuna prenotazione trovata.</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
@@ -911,5 +1062,13 @@ function RoomsManagerView({ rooms }) {
         </form>
       </Modal>
     </div>
+  );
+}
+
+export default function AppWrapper() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
   );
 }
