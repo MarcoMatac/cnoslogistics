@@ -48,13 +48,11 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Sincronizzazione in tempo reale con Firebase
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsers(usersData);
       
-      // Auto-creazione admin se il DB è vuoto
       if (usersData.length === 0 && !snapshot.metadata.fromCache) {
         setDoc(doc(db, "users", "admin-default"), {
           username: 'admin', password: 'password123', role: 'Master', name: 'Direttore'
@@ -84,12 +82,20 @@ export default function App() {
     
     if (user) {
       setCurrentUser(user);
+      // FIX ROUTING 1: Resetta sempre alla dashboard principale al login
+      setCurrentView('calendar');
       setLoginError('');
       setLoginUsername('');
       setLoginPassword('');
     } else {
       setLoginError('Credenziali non valide. Riprova.');
     }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    // FIX ROUTING 2: Pulisce la memoria della vista precedente al logout
+    setCurrentView('calendar');
   };
 
   if (isLoading) {
@@ -133,6 +139,11 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  // FIX ROUTING 3 (Guardia di Sicurezza): Se non sei Master e cerchi di vedere aule/utenti, vieni rimbalzato al calendario
+  if (currentUser.role !== 'Master' && (currentView === 'rooms' || currentView === 'users')) {
+    setCurrentView('calendar');
   }
 
   return (
@@ -179,7 +190,7 @@ export default function App() {
               </span>
             </div>
           </div>
-          <button onClick={() => setCurrentUser(null)} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm">
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm">
             <LogOut size={16} /> Disconnetti
           </button>
         </div>
@@ -199,11 +210,11 @@ export default function App() {
           <div className="h-full pt-8">
             {currentView === 'calendar' ? (
               <CalendarView currentUser={currentUser} users={users} bookings={bookings} rooms={rooms} />
-            ) : currentView === 'rooms' ? (
+            ) : currentView === 'rooms' && currentUser.role === 'Master' ? (
               <RoomsManagerView rooms={rooms} />
-            ) : (
+            ) : currentView === 'users' && currentUser.role === 'Master' ? (
               <UsersManagerView users={users} currentUser={currentUser} setCurrentUser={setCurrentUser} />
-            )}
+            ) : null}
           </div>
         </div>
       </main>
@@ -380,10 +391,13 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   const [formData, setFormData] = useState({ courseName: '', classroomId: '', startTime: '', endTime: '', specialRequests: '' });
   const [startDate, setStartDate] = useState(format(selectedDate, "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(selectedDate, "yyyy-MM-dd"));
+  
+  // FIX REGRESSIONE 2: Ripristinati gli stati per la gestione avanzata
   const [excludeWeekends, setExcludeWeekends] = useState(false);
   const [excludeSpecific, setExcludeSpecific] = useState(false);
   const [excludedDates, setExcludedDates] = useState([]);
   const [tempExcludeDate, setTempExcludeDate] = useState('');
+  
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -394,6 +408,10 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       setExcludedDates([...excludedDates, tempExcludeDate]);
       setTempExcludeDate('');
     }
+  };
+
+  const handleRemoveExcludeDate = (dateToRemove) => {
+    setExcludedDates(excludedDates.filter(d => d !== dateToRemove));
   };
 
   const handleSubmit = async (e) => {
@@ -423,7 +441,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       });
 
       if (validDates.length === 0) {
-        setFormError("Nessuna data valida selezionata per la prenotazione.");
+        setFormError("Nessuna data valida selezionata per la prenotazione. Controlla le esclusioni.");
         setIsSubmitting(false);
         return;
       }
@@ -437,7 +455,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         );
 
         if (isOverlapping) {
-          overlapError = `Aula già occupata il giorno ${format(validDates[i], "dd/MM/yyyy")} in questo orario.`;
+          overlapError = `Attenzione: l'aula è già occupata il giorno ${format(validDates[i], "dd/MM/yyyy")} in questo orario.`;
           break;
         }
       }
@@ -448,7 +466,6 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         return;
       }
 
-      // Salvataggio su Firestore
       for (let i = 0; i < validDates.length; i++) {
         const dateStr = format(validDates[i], "yyyy-MM-dd");
         await addDoc(collection(db, "bookings"), {
@@ -460,7 +477,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
 
       onClose();
     } catch (error) {
-      setFormError("Errore di connessione al database.");
+      setFormError("Errore di connessione al database o date non valide.");
     }
     setIsSubmitting(false);
   };
@@ -484,8 +501,8 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       )}
       
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1">Nome Corso</label>
-        <input required type="text" className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.courseName} onChange={e => setFormData({...formData, courseName: e.target.value})} />
+        <label className="block text-sm font-semibold text-slate-700 mb-1">Nome Corso / Attività</label>
+        <input required type="text" className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.courseName} onChange={e => setFormData({...formData, courseName: e.target.value})} placeholder="Es. Corso di Informatica" />
       </div>
       
       <div>
@@ -525,24 +542,63 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         </div>
       </div>
 
+      {/* FIX REGRESSIONE 2: Interfaccia Gestione Date Avanzata Completamente Ripristinata */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2"><CalendarDays size={16} className="text-indigo-600"/> Ripetizione</h4>
+        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2"><CalendarDays size={16} className="text-indigo-600"/> Periodo e Ripetizioni</h4>
+        
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Dal</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Dal Giorno</label>
             <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Al</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Al Giorno</label>
             <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeWeekends} onChange={e => setExcludeWeekends(e.target.checked)} />
+            <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">Escludi Sabato e Domenica</span>
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeSpecific} onChange={e => setExcludeSpecific(e.target.checked)} />
+            <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">Escludi giorni specifici (es. Festività)</span>
+          </label>
+
+          {/* UI Scomparsa per le Date Specifiche */}
+          {excludeSpecific && (
+            <div className="pl-6 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+              <div className="flex gap-2">
+                <input type="date" className="flex-1 bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-indigo-500 shadow-sm" value={tempExcludeDate} onChange={e => setTempExcludeDate(e.target.value)} />
+                <button type="button" onClick={handleAddExcludeDate} className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold px-3 py-1.5 rounded-lg transition-colors">
+                  Aggiungi
+                </button>
+              </div>
+              
+              {excludedDates.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
+                  {excludedDates.map(date => (
+                    <span key={date} className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-2 py-1 rounded-md text-xs font-bold border border-red-100">
+                      {format(parseISO(date), "dd/MM/yyyy")}
+                      <button type="button" onClick={() => handleRemoveExcludeDate(date)} className="hover:bg-red-200 rounded-full p-0.5 transition-colors">
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="pt-4 flex justify-end gap-3 mt-6">
         <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Annulla</button>
         <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md flex items-center gap-2 transition-colors">
-          {isSubmitting ? 'Salvataggio...' : 'Conferma'}
+          {isSubmitting ? 'Salvataggio...' : 'Conferma Prenotazione'}
         </button>
       </div>
     </form>
@@ -639,12 +695,11 @@ function UsersManagerView({ users, currentUser, setCurrentUser }) {
   );
 }
 
-// --- ROOMS MANAGER VIEW (Refactored to match UI Screenshot) ---
+// --- ROOMS MANAGER VIEW ---
 function RoomsManagerView({ rooms }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   
-  // Ripristinata la struttura dati completa per l'equipment
   const defaultForm = { 
     name: '', 
     capacity: '', 
@@ -663,7 +718,6 @@ function RoomsManagerView({ rooms }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Parsing rigoroso per garantire che i numeri vengano salvati come Integer in Firestore
     const dataToSave = { 
       ...formData, 
       capacity: parseInt(formData.capacity) || 0,
@@ -736,7 +790,6 @@ function RoomsManagerView({ rooms }) {
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
             <label className="block text-sm font-bold text-slate-800 mb-5">Seleziona Dotazioni Tecniche</label>
             
-            {/* Griglia esatta come nello screenshot */}
             <div className="grid grid-cols-2 gap-y-4 gap-x-6">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.lim} onChange={e => setFormData({...formData, equipment: {...formData.equipment, lim: e.target.checked}})} />
@@ -764,7 +817,6 @@ function RoomsManagerView({ rooms }) {
               </label>
             </div>
 
-            {/* Sezione separata per i Computer con Progressive Disclosure */}
             <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center gap-4">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.pc} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pc: e.target.checked}})} />
