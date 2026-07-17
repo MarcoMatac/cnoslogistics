@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Users, Settings, LogOut, School, 
   ChevronLeft, ChevronRight, Filter, X, Plus, 
-  Lock, Eye, Edit2, ShieldAlert, DoorOpen, Tv, Wifi, Monitor, PenTool, Network, Key, Trash2, CalendarDays, Menu, History, ServerCrash, CheckCircle2, Bookmark, Lightbulb
+  Lock, Eye, Edit2, ShieldAlert, DoorOpen, Tv, Wifi, Monitor, PenTool, Network, Key, Trash2, CalendarDays, Menu, History, ServerCrash, CheckCircle2, Bookmark, Lightbulb, Projector, AlignLeft
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, parseISO, isWeekend } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -16,19 +16,15 @@ function classNames(...classes) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: ERROR BOUNDARY (Scudo Anti Schermata Bianca)
+// MODULO: ERROR BOUNDARY
 // ----------------------------------------------------------------------
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
   }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, errorInfo) {
-    console.error("Scudo ErrorBoundary ha intercettato un crash:", error, errorInfo);
-  }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { console.error("Crash intercettato:", error, errorInfo); }
   render() {
     if (this.state.hasError) {
       return (
@@ -36,10 +32,8 @@ class ErrorBoundary extends React.Component {
           <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center border border-red-200">
             <ServerCrash size={48} className="mx-auto text-red-500 mb-4" />
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">Ops! Incongruenza Dati</h2>
-            <p className="text-slate-600 mt-2 font-medium text-sm">L'interfaccia ha incontrato un errore durante l'aggiornamento in tempo reale. I tuoi dati nel database sono al sicuro.</p>
-            <button onClick={() => window.location.reload()} className="mt-6 w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
-              Ricarica Applicazione
-            </button>
+            <p className="text-slate-600 mt-2 font-medium text-sm">L'interfaccia ha incontrato un errore. I tuoi dati nel database sono al sicuro.</p>
+            <button onClick={() => window.location.reload()} className="mt-6 w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">Ricarica Applicazione</button>
           </div>
         </div>
       );
@@ -49,7 +43,7 @@ class ErrorBoundary extends React.Component {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: SMART MODAL (Responsive Bottom Sheet su Mobile)
+// MODULO: SMART MODAL
 // ----------------------------------------------------------------------
 function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
@@ -60,9 +54,7 @@ function Modal({ isOpen, onClose, title, children }) {
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
         <div className="mb-4 sm:mb-6 flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4 shrink-0">
           <h2 className="text-xl font-black tracking-tight text-slate-800">{title}</h2>
-          <button onClick={onClose} className="rounded-full p-2 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
-            <X size={20} />
-          </button>
+          <button onClick={onClose} className="rounded-full p-2 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto no-scrollbar flex-1 pb-4">
           {children}
@@ -73,7 +65,7 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO PRINCIPALE: CORE APP & ROUTING
+// MODULO PRINCIPALE: CORE APP
 // ----------------------------------------------------------------------
 function MainApp() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -83,7 +75,6 @@ function MainApp() {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [rooms, setRooms] = useState([]);
-  
   const [isLoading, setIsLoading] = useState(true);
   const [dbError, setDbError] = useState(null);
 
@@ -96,35 +87,29 @@ function MainApp() {
     const checkReady = () => { if (uLoaded && rLoaded && bLoaded) setIsLoading(false); };
 
     const handleError = (error) => {
-      console.error("Connessione a Firebase fallita:", error);
-      setDbError("Impossibile contattare i server cloud. Verifica le Regole di Sicurezza su Firebase o la tua connessione.");
+      console.error("Firebase Error:", error);
+      setDbError("Impossibile contattare i server cloud. Verifica la connessione o le Regole di Sicurezza.");
       setIsLoading(false);
     };
 
-    const unsubUsers = onSnapshot(collection(db, "users"), 
-      (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setUsers(usersData);
-        if (usersData.length === 0 && !snapshot.metadata.fromCache) {
-          setDoc(doc(db, "users", "admin-default"), { username: 'admin', password: 'password123', role: 'Master', name: 'Direttore' });
-        }
-        uLoaded = true; checkReady();
-      }, handleError
-    );
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(usersData);
+      if (usersData.length === 0 && !snapshot.metadata.fromCache) {
+        setDoc(doc(db, "users", "admin-default"), { username: 'admin', password: 'password123', role: 'Master', name: 'Direttore' });
+      }
+      uLoaded = true; checkReady();
+    }, handleError);
 
-    const unsubRooms = onSnapshot(collection(db, "rooms"), 
-      (snapshot) => {
-        setRooms(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        rLoaded = true; checkReady();
-      }, handleError
-    );
+    const unsubRooms = onSnapshot(collection(db, "rooms"), (snapshot) => {
+      setRooms(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      rLoaded = true; checkReady();
+    }, handleError);
 
-    const unsubBookings = onSnapshot(collection(db, "bookings"), 
-      (snapshot) => {
-        setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        bLoaded = true; checkReady();
-      }, handleError
-    );
+    const unsubBookings = onSnapshot(collection(db, "bookings"), (snapshot) => {
+      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      bLoaded = true; checkReady();
+    }, handleError);
 
     return () => { unsubUsers(); unsubRooms(); unsubBookings(); };
   }, []);
@@ -140,13 +125,8 @@ function MainApp() {
     }
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null); setCurrentView('calendar'); setIsMobileMenuOpen(false);
-  };
-
-  const navigateTo = (view) => {
-    setCurrentView(view); setIsMobileMenuOpen(false);
-  };
+  const handleLogout = () => { setCurrentUser(null); setCurrentView('calendar'); setIsMobileMenuOpen(false); };
+  const navigateTo = (view) => { setCurrentView(view); setIsMobileMenuOpen(false); };
 
   if (dbError) {
     return (
@@ -155,30 +135,20 @@ function MainApp() {
           <ServerCrash size={48} className="mx-auto text-red-500 mb-4" />
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Sistema Offline</h2>
           <p className="text-slate-600 mt-2 font-medium">{dbError}</p>
-          <button onClick={() => window.location.reload()} className="mt-6 w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">
-            Riprova Connessione
-          </button>
+          <button onClick={() => window.location.reload()} className="mt-6 w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition-colors">Riprova Connessione</button>
         </div>
       </div>
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin text-indigo-600"><Settings size={40} /></div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin text-indigo-600"><Settings size={40} /></div></div>;
 
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-6 sm:p-8 border border-slate-100 animate-in fade-in zoom-in-95">
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg mb-4">
-              <School size={32} />
-            </div>
+            <div className="h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg mb-4"><School size={32} /></div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">CnosLogistics</h1>
             <p className="text-slate-500 mt-2 font-medium">Accedi al pannello di gestione</p>
           </div>
@@ -202,53 +172,33 @@ function MainApp() {
     );
   }
 
-  // Guardia di routing protettiva
-  if (currentUser.role !== 'Master' && (currentView === 'rooms' || currentView === 'users')) {
-    setCurrentView('calendar');
-  }
+  if (currentUser.role !== 'Master' && (currentView === 'rooms' || currentView === 'users')) setCurrentView('calendar');
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900 font-sans overflow-hidden">
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity" onClick={() => setIsMobileMenuOpen(false)} />
-      )}
+      {isMobileMenuOpen && (<div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden transition-opacity" onClick={() => setIsMobileMenuOpen(false)} />)}
 
-      <aside className={classNames(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white flex flex-col shadow-2xl lg:shadow-none lg:border-r border-slate-200 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside className={classNames("fixed inset-y-0 left-0 z-50 w-72 bg-white flex flex-col shadow-2xl lg:shadow-none lg:border-r border-slate-200 transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0", isMobileMenuOpen ? "translate-x-0" : "-translate-x-full")}>
         <div className="p-6 border-b border-slate-100 flex items-center justify-between lg:justify-start gap-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md">
-              <School size={24} />
-            </div>
+            <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md"><School size={24} /></div>
             <div>
               <h1 className="font-bold text-slate-900 leading-tight">CnosLogistics</h1>
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
-                {currentUser.role === 'Master' && <ShieldAlert size={12}/>} {currentUser.role}
-              </span>
+              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">{currentUser.role === 'Master' && <ShieldAlert size={12}/>} {currentUser.role}</span>
             </div>
           </div>
           <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-slate-400 hover:bg-slate-100 rounded-full"><X size={20}/></button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <button onClick={() => navigateTo('calendar')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'calendar' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
-            <Calendar size={18} /> Calendario Aule
-          </button>
-          <button onClick={() => navigateTo('my-bookings')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'my-bookings' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
-            <Bookmark size={18} /> Le Mie Prenotazioni
-          </button>
+          <button onClick={() => navigateTo('calendar')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'calendar' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}><Calendar size={18} /> Calendario Aule</button>
+          <button onClick={() => navigateTo('my-bookings')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'my-bookings' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}><Bookmark size={18} /> Le Mie Prenotazioni</button>
           
           {currentUser.role === 'Master' && (
             <>
               <div className="pt-6 pb-2"><p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Amministrazione</p></div>
-              <button onClick={() => navigateTo('rooms')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'rooms' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
-                <DoorOpen size={18} /> Gestione Aule
-              </button>
-              <button onClick={() => navigateTo('users')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'users' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}>
-                <Users size={18} /> Gestione Utenti
-              </button>
+              <button onClick={() => navigateTo('rooms')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'rooms' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}><DoorOpen size={18} /> Gestione Aule</button>
+              <button onClick={() => navigateTo('users')} className={classNames("w-full flex items-center gap-3 px-4 py-3.5 lg:py-3 rounded-xl text-sm font-bold transition-all", currentView === 'users' ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100" : "text-slate-600 hover:bg-slate-50")}><Users size={18} /> Gestione Utenti</button>
             </>
           )}
         </nav>
@@ -260,9 +210,7 @@ function MainApp() {
               <span className="text-xs text-green-600 font-bold flex items-center gap-1.5 mt-0.5"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Sistema Online</span>
             </div>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 lg:py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm">
-            <LogOut size={16} /> Disconnetti
-          </button>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 lg:py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm"><LogOut size={16} /> Disconnetti</button>
         </div>
       </aside>
 
@@ -303,15 +251,12 @@ function MainApp() {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: LE MIE PRENOTAZIONI (VISTA UTENTE SINGOLO)
+// MODULO: LE MIE PRENOTAZIONI
 // ----------------------------------------------------------------------
 function MyBookingsView({ currentUser, bookings, rooms }) {
   const myBookings = bookings.filter(b => b.userId === currentUser.id).sort((a,b) => b.date.localeCompare(a.date));
   const todayDate = format(new Date(), "yyyy-MM-dd");
-
-  const handleDeleteBooking = async (bookingId) => {
-    await deleteDoc(doc(db, "bookings", bookingId));
-  };
+  const handleDeleteBooking = async (bookingId) => { await deleteDoc(doc(db, "bookings", bookingId)); };
 
   return (
     <div className="bg-white rounded-2xl lg:rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[600px] flex flex-col">
@@ -336,9 +281,7 @@ function MyBookingsView({ currentUser, bookings, rooms }) {
                 <div key={booking.id} className={classNames("p-5 rounded-2xl border flex flex-col relative transition-all shadow-sm hover:shadow-md", isFuture ? "bg-white border-slate-200" : "bg-slate-50 border-slate-200 opacity-80")}>
                   <div className="flex justify-between items-start mb-3">
                     <h4 className="font-black text-slate-900 text-lg leading-tight pr-4">{booking.courseName}</h4>
-                    <span className={classNames("text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md shrink-0", isFuture ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600")}>
-                      {isFuture ? 'In Arrivo' : 'Passata'}
-                    </span>
+                    <span className={classNames("text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md shrink-0", isFuture ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600")}>{isFuture ? 'In Arrivo' : 'Passata'}</span>
                   </div>
                   <div className="space-y-2 mt-auto">
                     <div className="flex items-center gap-3 text-sm font-bold text-indigo-700 bg-indigo-50 p-2.5 rounded-xl border border-indigo-100">
@@ -347,11 +290,15 @@ function MyBookingsView({ currentUser, bookings, rooms }) {
                     <div className="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
                       <DoorOpen size={16} className="text-slate-400"/> {room?.name || 'Aula Rimosossa'}
                     </div>
+                    {booking.specialRequests && (
+                      <div className="text-xs bg-amber-50 text-amber-800 p-2.5 rounded-xl border border-amber-100 flex items-start gap-2 mt-2">
+                         <AlignLeft size={14} className="shrink-0 mt-0.5 opacity-70" />
+                         <span>{booking.specialRequests}</span>
+                      </div>
+                    )}
                   </div>
                   {isFuture && (
-                    <button onClick={() => handleDeleteBooking(booking.id)} className="absolute top-4 right-4 p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors shadow-sm active:scale-95">
-                      <Trash2 size={16} />
-                    </button>
+                    <button onClick={() => handleDeleteBooking(booking.id)} className="absolute top-4 right-4 p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors shadow-sm active:scale-95"><Trash2 size={16} /></button>
                   )}
                 </div>
               );
@@ -364,7 +311,7 @@ function MyBookingsView({ currentUser, bookings, rooms }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: CALENDARIO E GESTIONE PRENOTAZIONI
+// MODULO: CALENDARIO AULE
 // ----------------------------------------------------------------------
 function CalendarView({ currentUser, users, bookings, rooms }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -377,22 +324,9 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const handleDayClick = (day) => {
-    setSelectedDate(day);
-    setActiveTab('new');
-    setIsModalOpen(true);
-  };
-
-  const handleViewBookings = (day, e) => {
-    e.stopPropagation();
-    setSelectedDate(day);
-    setActiveTab('list');
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteBooking = async (bookingId) => {
-    await deleteDoc(doc(db, "bookings", bookingId));
-  };
+  const handleDayClick = (day) => { setSelectedDate(day); setActiveTab('new'); setIsModalOpen(true); };
+  const handleViewBookings = (day, e) => { e.stopPropagation(); setSelectedDate(day); setActiveTab('list'); setIsModalOpen(true); };
+  const handleDeleteBooking = async (bookingId) => { await deleteDoc(doc(db, "bookings", bookingId)); };
 
   return (
     <div className="h-full flex flex-col bg-white rounded-2xl lg:rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -442,11 +376,7 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
             const isTodayDate = isToday(day);
 
             return (
-              <div key={day.toString()} onClick={() => handleDayClick(day)} className={classNames(
-                "bg-white min-h-[90px] sm:min-h-[120px] p-1.5 sm:p-2.5 transition-colors cursor-pointer group relative flex flex-col active:bg-indigo-50/50 hover:bg-indigo-50/30", 
-                !isSameMonth(day, currentDate) && "bg-slate-50/50 opacity-60", 
-                isTodayDate && "bg-indigo-50/20"
-              )}>
+              <div key={day.toString()} onClick={() => handleDayClick(day)} className={classNames("bg-white min-h-[90px] sm:min-h-[120px] p-1.5 sm:p-2.5 transition-colors cursor-pointer group relative flex flex-col active:bg-indigo-50/50 hover:bg-indigo-50/30", !isSameMonth(day, currentDate) && "bg-slate-50/50 opacity-60", isTodayDate && "bg-indigo-50/20")}>
                 <div className="flex items-start justify-between shrink-0 mb-1.5">
                   <span className={classNames("flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-xs sm:text-sm font-bold transition-all", isTodayDate ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-700 bg-transparent group-hover:text-indigo-700")}>
                     {format(day, "d")}
@@ -529,6 +459,12 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
                             <div className="flex items-center gap-2 font-bold"><DoorOpen size={16} className="text-slate-400"/> {room?.name || 'Aula Rimosossa'}</div>
                             <div className="flex items-center gap-2 font-bold"><Users size={16} className="text-slate-400"/> {author?.name || "Utente Rimosso"}</div>
                           </div>
+                          {booking.specialRequests && (
+                            <div className="text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2 mt-1">
+                              <AlignLeft size={14} className="shrink-0 mt-0.5 opacity-70" />
+                              <span className="font-medium">{booking.specialRequests}</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })
@@ -544,19 +480,22 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: FORM PRENOTAZIONE (Con Smart Booking Engine e Suggestions)
+// MODULO: FORM PRENOTAZIONE (Con Special Requests e Progressive Disclosure)
 // ----------------------------------------------------------------------
 function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   const [formData, setFormData] = useState({ courseName: '', classroomId: '', startTime: '', endTime: '', specialRequests: '' });
   const [startDate, setStartDate] = useState(format(selectedDate, "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(selectedDate, "yyyy-MM-dd"));
+  
+  // STATI PROGRESSIVE DISCLOSURE
+  const [isMultiDay, setIsMultiDay] = useState(false);
   const [excludeWeekends, setExcludeWeekends] = useState(false);
   const [excludeSpecific, setExcludeSpecific] = useState(false);
   const [excludedDates, setExcludedDates] = useState([]);
   const [tempExcludeDate, setTempExcludeDate] = useState('');
   
   const [errorMsg, setErrorMsg] = useState('');
-  const [overlapData, setOverlapData] = useState(null); // Contiene dettagli conflitto e suggerimenti
+  const [overlapData, setOverlapData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedRoomDetails = rooms.find(r => r.id === formData.classroomId);
@@ -566,52 +505,48 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   };
   const handleRemoveExcludeDate = (dateToRemove) => { setExcludedDates(excludedDates.filter(d => d !== dateToRemove)); };
 
+  // Sync EndDate se si spegne il multi-day
+  useEffect(() => { if (!isMultiDay) setEndDate(startDate); }, [isMultiDay, startDate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     setErrorMsg(''); setOverlapData(null); setIsSubmitting(true);
     
     if (formData.endTime <= formData.startTime) { setErrorMsg("L'ora di fine deve essere successiva all'inizio."); setIsSubmitting(false); return; }
-    if (endDate < startDate) { setErrorMsg("Data fine precedente a data inizio."); setIsSubmitting(false); return; }
+    
+    const finalEndDate = isMultiDay ? endDate : startDate;
+    if (finalEndDate < startDate) { setErrorMsg("Data fine precedente a data inizio."); setIsSubmitting(false); return; }
 
     try {
-      const allDates = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });
+      const allDates = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(finalEndDate) });
       const validDates = allDates.filter(date => {
         const dateStr = format(date, "yyyy-MM-dd");
-        if (excludeWeekends && isWeekend(date)) return false;
-        if (excludeSpecific && excludedDates.includes(dateStr)) return false;
+        if (isMultiDay && excludeWeekends && isWeekend(date)) return false;
+        if (isMultiDay && excludeSpecific && excludedDates.includes(dateStr)) return false;
         return true;
       });
 
       if (validDates.length === 0) { setErrorMsg("Nessuna data valida selezionata."); setIsSubmitting(false); return; }
 
-      // PRE-FLIGHT CHECK INTELLIGENTE
+      // PRE-FLIGHT CHECK
       let overlapDetails = null;
       let alternatives = [];
-
       for (let i = 0; i < validDates.length; i++) {
         const dateStr = format(validDates[i], "yyyy-MM-dd");
         const conflictingBooking = bookings.find(b => b.date === dateStr && b.classroomId === formData.classroomId && formData.startTime < b.endTime && formData.endTime > b.startTime);
         
         if (conflictingBooking) { 
-          // Conflitto trovato. Cerchiamo aule alternative libere in questo esatto momento.
           alternatives = rooms.filter(room => {
-            if (room.id === formData.classroomId) return false; // Ignora l'aula già occupata
-            const isAlternativeBooked = bookings.some(b => b.date === dateStr && b.classroomId === room.id && formData.startTime < b.endTime && formData.endTime > b.startTime);
-            return !isAlternativeBooked;
+            if (room.id === formData.classroomId) return false;
+            return !bookings.some(b => b.date === dateStr && b.classroomId === room.id && formData.startTime < b.endTime && formData.endTime > b.startTime);
           });
-          
           overlapDetails = { date: dateStr, booking: conflictingBooking, alternatives };
-          break; // Ci fermiamo al primo conflitto per non confondere l'utente
+          break;
         }
       }
 
-      if (overlapDetails) { 
-        setOverlapData(overlapDetails);
-        setIsSubmitting(false); 
-        return; 
-      }
+      if (overlapDetails) { setOverlapData(overlapDetails); setIsSubmitting(false); return; }
 
-      // Se non ci sono conflitti, scriviamo su db
       const batch = writeBatch(db);
       for (let i = 0; i < validDates.length; i++) {
         const newBookingRef = doc(collection(db, "bookings"));
@@ -635,11 +570,8 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-6">
-      
-      {/* MESSAGGI DI ERRORE GENERICI */}
       {errorMsg && (<div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100 flex items-center gap-3 animate-in fade-in"><ShieldAlert size={20} className="shrink-0" /> <span>{errorMsg}</span></div>)}
       
-      {/* MOTORE INTELLIGENTE: PANNELLO SOVRAPPOSIZIONE E SUGGERIMENTI */}
       {overlapData && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 animate-in slide-in-from-top-4 duration-300 shadow-sm">
           <div className="flex items-start gap-3">
@@ -647,26 +579,19 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
             <div>
               <h4 className="text-base font-black text-amber-900">Aula non disponibile!</h4>
               <p className="text-sm font-medium text-amber-800 mt-1 leading-relaxed">
-                Il giorno <strong>{format(parseISO(overlapData.date), "dd/MM/yyyy")}</strong> dalle {formData.startTime} alle {formData.endTime}, l'aula è già occupata dal corso/evento: <strong>"{overlapData.booking.courseName}"</strong>.
+                Il <strong>{format(parseISO(overlapData.date), "dd/MM/yyyy")}</strong> dalle {formData.startTime} alle {formData.endTime}, l'aula è occupata da: <strong>"{overlapData.booking.courseName}"</strong>.
               </p>
             </div>
           </div>
-          
           <div className="mt-5 bg-white rounded-xl p-4 border border-amber-100">
-            <h5 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-3">
-              <Lightbulb size={14} className="text-amber-500" /> Aule alternative libere
-            </h5>
+            <h5 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2 mb-3"><Lightbulb size={14} className="text-amber-500" /> Aule libere come alternativa</h5>
             {overlapData.alternatives.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {overlapData.alternatives.map(altRoom => (
-                  <button type="button" key={altRoom.id} onClick={() => {setFormData({...formData, classroomId: altRoom.id}); setOverlapData(null);}} className="inline-flex items-center bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200 hover:bg-indigo-50 transition-colors shadow-sm active:scale-95">
-                    Seleziona {altRoom.name}
-                  </button>
+                  <button type="button" key={altRoom.id} onClick={() => {setFormData({...formData, classroomId: altRoom.id}); setOverlapData(null);}} className="inline-flex items-center bg-white text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold border border-indigo-200 hover:bg-indigo-50 transition-colors shadow-sm active:scale-95">Seleziona {altRoom.name}</button>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm font-bold text-slate-500">Purtroppo non ci sono aule libere in quell'orario.</p>
-            )}
+            ) : (<p className="text-sm font-bold text-slate-500">Nessuna aula alternativa libera.</p>)}
           </div>
         </div>
       )}
@@ -686,7 +611,10 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
             <span className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2.5"><Tv size={14} /> Dotazioni Aula Selezionata</span>
             <div className="flex flex-wrap gap-2">
               {selectedRoomDetails.equipment.lim && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Tv size={12}/> LIM</span>}
+              {selectedRoomDetails.equipment.projector && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Projector size={12}/> Proiettore</span>}
               {selectedRoomDetails.equipment.wifi && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Wifi size={12}/> WiFi</span>}
+              {selectedRoomDetails.equipment.wired && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><Network size={12}/> LAN</span>}
+              {selectedRoomDetails.equipment.whiteboard && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><PenTool size={12}/> Lavagna</span>}
               {selectedRoomDetails.equipment.pc && <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg text-xs font-black border border-indigo-100"><Monitor size={12}/> {selectedRoomDetails.equipment.pcCount} PC</span>}
             </div>
           </div>
@@ -704,47 +632,68 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-5">
-        <h4 className="text-base font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3"><CalendarDays size={18} className="text-indigo-600"/> Periodo e Ripetizioni</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Inizio Periodo</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={startDate} onChange={e => {setStartDate(e.target.value); setOverlapData(null);}} />
-          </div>
-          <div>
-            <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Fine Periodo</label>
-            <input required type="date" className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" value={endDate} onChange={e => {setEndDate(e.target.value); setOverlapData(null);}} />
-          </div>
+      {/* RICHIESTE SPECIALI */}
+      <div>
+        <label className="block text-sm font-bold text-slate-700 mb-1.5">Richieste Speciali / Note</label>
+        <textarea rows={2} className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none" placeholder="Es. Predisporre microfono..." value={formData.specialRequests} onChange={e => setFormData({...formData, specialRequests: e.target.value})} />
+      </div>
+
+      {/* PROGRESSIVE DISCLOSURE: PRENOTAZIONE MULTIPLA */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+            <div>
+                <h4 className="text-sm font-black text-slate-900 flex items-center gap-2"><CalendarDays size={16} className="text-indigo-600"/> Prenotazione Multipla</h4>
+                <p className="text-xs text-slate-500 font-medium mt-1">Prenota per più giorni consecutivi</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={isMultiDay} onChange={() => setIsMultiDay(!isMultiDay)} />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
         </div>
 
-        <div className="space-y-4 pt-2">
-          <label className="flex items-center gap-3 cursor-pointer group bg-slate-50 p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
-            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeWeekends} onChange={e => {setExcludeWeekends(e.target.checked); setOverlapData(null);}} />
-            <span className="text-sm font-bold text-slate-700">Escludi Sabato e Domenica</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer group bg-slate-50 p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors">
-            <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeSpecific} onChange={e => {setExcludeSpecific(e.target.checked); setOverlapData(null);}} />
-            <span className="text-sm font-bold text-slate-700">Escludi giorni specifici (Festività)</span>
-          </label>
-          {excludeSpecific && (
-            <div className="pl-2 sm:pl-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input type="date" className="flex-1 bg-white border border-slate-200 text-slate-900 rounded-xl px-4 py-3 sm:py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={tempExcludeDate} onChange={e => setTempExcludeDate(e.target.value)} />
-                <button type="button" onClick={handleAddExcludeDate} className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold px-6 py-3 sm:py-2 rounded-xl transition-colors active:scale-95 shadow-md">Aggiungi</button>
-              </div>
-              {excludedDates.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  {excludedDates.map(date => (
-                    <span key={date} className="inline-flex items-center gap-2 bg-white text-slate-800 px-3 py-1.5 rounded-lg text-xs font-black border border-slate-200 shadow-sm">
-                      {format(parseISO(date), "dd/MM/yyyy")}
-                      <button type="button" onClick={() => handleRemoveExcludeDate(date)} className="text-red-500 hover:bg-red-50 rounded-full p-1 transition-colors"><X size={14} /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
+        <div className={classNames("grid grid-cols-1 gap-5 transition-all duration-300", isMultiDay ? "sm:grid-cols-2" : "")}>
+          <div>
+            <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">{isMultiDay ? "Dal Giorno" : "Giorno della prenotazione"}</label>
+            <input required type="date" className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={startDate} onChange={e => {setStartDate(e.target.value); setOverlapData(null);}} />
+          </div>
+          {isMultiDay && (
+            <div className="animate-in fade-in slide-in-from-left-4">
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-2">Al Giorno</label>
+              <input required type="date" className="w-full bg-white border border-slate-300 text-slate-900 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={endDate} onChange={e => {setEndDate(e.target.value); setOverlapData(null);}} />
             </div>
           )}
         </div>
+
+        {isMultiDay && (
+          <div className="space-y-4 pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2">
+            <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors shadow-sm">
+              <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeWeekends} onChange={e => {setExcludeWeekends(e.target.checked); setOverlapData(null);}} />
+              <span className="text-sm font-bold text-slate-700">Escludi Sabato e Domenica</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-xl border border-transparent hover:border-slate-200 transition-colors shadow-sm">
+              <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={excludeSpecific} onChange={e => {setExcludeSpecific(e.target.checked); setOverlapData(null);}} />
+              <span className="text-sm font-bold text-slate-700">Escludi date specifiche (Festività)</span>
+            </label>
+            {excludeSpecific && (
+              <div className="pl-2 sm:pl-4 animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input type="date" className="flex-1 bg-white border border-slate-300 text-slate-900 rounded-xl px-4 py-3 sm:py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={tempExcludeDate} onChange={e => setTempExcludeDate(e.target.value)} />
+                  <button type="button" onClick={handleAddExcludeDate} className="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold px-6 py-3 sm:py-2 rounded-xl transition-colors active:scale-95 shadow-md">Aggiungi</button>
+                </div>
+                {excludedDates.length > 0 && (
+                  <div className="flex flex-wrap gap-2 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    {excludedDates.map(date => (
+                      <span key={date} className="inline-flex items-center gap-2 bg-slate-50 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-black border border-slate-200 shadow-sm">
+                        {format(parseISO(date), "dd/MM/yyyy")}
+                        <button type="button" onClick={() => handleRemoveExcludeDate(date)} className="text-red-500 hover:bg-red-50 rounded-full p-1 transition-colors"><X size={14} /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="pt-6 sm:pt-4 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8">
@@ -758,7 +707,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: CANCELLAZIONE MASSIVA SAFE (Bulk Delete via Batch)
+// MODULO: CANCELLAZIONE MASSIVA SAFE
 // ----------------------------------------------------------------------
 function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
   const [classroomId, setClassroomId] = useState('');
@@ -780,14 +729,9 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
     setIsDeleting(true);
     try {
       const batch = writeBatch(db);
-      targetBookings.forEach(booking => {
-        batch.delete(doc(db, "bookings", booking.id));
-      });
+      targetBookings.forEach(booking => { batch.delete(doc(db, "bookings", booking.id)); });
       await batch.commit();
-      
       setStatusMsg(`Successo! Eliminate ${targetBookings.length} prenotazioni.`);
-      
-      // Svuotiamo lo stato per evitare crash di re-render prima della chiusura asincrona
       setClassroomId(''); setStartDate(''); setEndDate('');
       setTimeout(() => { if (onClose) onClose(); }, 2000);
     } catch (error) {
@@ -802,7 +746,6 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
         <ShieldAlert className="text-red-600 shrink-0 mt-0.5 sm:mt-0" size={24} />
         <p className="text-sm text-red-800 font-medium">Questa azione eliminerà le prenotazioni autorizzate nel periodo selezionato. L'azione è <strong className="font-black">irreversibile</strong>.</p>
       </div>
-
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-1.5">Seleziona Aula da liberare</label>
@@ -822,20 +765,17 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
           </div>
         </div>
       </div>
-
       {classroomId && startDate && endDate && !statusMsg && (
         <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-center animate-in zoom-in-95">
           <p className="text-sm font-bold text-slate-600">Prenotazioni trovate e cancellabili:</p>
           <p className="text-4xl font-black text-slate-900 mt-2">{targetBookings.length}</p>
         </div>
       )}
-
       {statusMsg && (
         <div className="p-4 bg-green-50 text-green-700 rounded-2xl border border-green-200 text-center font-bold text-sm flex items-center justify-center gap-2 animate-in slide-in-from-bottom-2">
           <CheckCircle2 size={18} /> {statusMsg}
         </div>
       )}
-
       <div className="pt-6 flex flex-col sm:flex-row justify-end gap-3 mt-4 border-t border-slate-100">
         <button type="button" onClick={onClose} disabled={isDeleting} className="w-full sm:w-auto px-6 py-3.5 sm:py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl disabled:opacity-50">Annulla</button>
         <button type="button" onClick={handleBulkDelete} disabled={targetBookings.length === 0 || isDeleting} className="w-full sm:w-auto px-8 py-3.5 sm:py-3 text-sm font-bold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 rounded-xl flex justify-center gap-2 items-center shadow-lg shadow-red-200 transition-transform active:scale-[0.98]">
@@ -847,7 +787,7 @@ function BulkDeleteForm({ currentUser, bookings, rooms, onClose }) {
 }
 
 // ----------------------------------------------------------------------
-// MODULO: GESTIONE UTENTI (Con Storico Modal)
+// MODULO: GESTIONE UTENTI
 // ----------------------------------------------------------------------
 function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -857,25 +797,16 @@ function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms 
   const defaultForm = { name: '', username: '', password: '', role: 'Visual' };
   const [formData, setFormData] = useState(defaultForm);
 
-  const handleDelete = async (userId) => {
-    if(userId === currentUser.id) return;
-    await deleteDoc(doc(db, "users", userId));
-  };
-
+  const handleDelete = async (userId) => { if(userId === currentUser.id) return; await deleteDoc(doc(db, "users", userId)); };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (editingUser) {
       await updateDoc(doc(db, "users", editingUser.id), formData);
       if (editingUser.id === currentUser.id) setCurrentUser({ ...currentUser, ...formData });
-    } else {
-      await addDoc(collection(db, "users"), formData);
-    }
+    } else { await addDoc(collection(db, "users"), formData); }
     setIsModalOpen(false);
   };
-
-  const openRecap = (user) => {
-    setViewingUser(user); setIsRecapModalOpen(true);
-  };
+  const openRecap = (user) => { setViewingUser(user); setIsRecapModalOpen(true); };
 
   return (
     <div className="bg-white rounded-2xl lg:rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -938,6 +869,12 @@ function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms 
                         <CalendarDays size={16} /> {format(parseISO(booking.date), "dd/MM/yyyy")} | {booking.startTime} - {booking.endTime}
                       </div>
                       <div className="flex items-center gap-2 text-sm font-bold text-slate-500 mt-1"><DoorOpen size={16}/> {room?.name || 'Aula Rimosossa'}</div>
+                      {booking.specialRequests && (
+                        <div className="text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-100 flex items-start gap-2 mt-1">
+                          <AlignLeft size={14} className="shrink-0 mt-0.5 opacity-70" />
+                          <span className="font-medium">{booking.specialRequests}</span>
+                        </div>
+                      )}
                     </div>
                   );
               })}
@@ -986,6 +923,7 @@ function UsersManagerView({ users, currentUser, setCurrentUser, bookings, rooms 
 function RoomsManagerView({ rooms }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
+  
   const defaultForm = { name: '', capacity: '', equipment: { lim: false, projector: false, wifi: false, wired: false, whiteboard: false, pc: false, pcCount: 0 } };
   const [formData, setFormData] = useState(defaultForm);
 
@@ -1016,8 +954,12 @@ function RoomsManagerView({ rooms }) {
               </div>
               <div className="flex flex-wrap gap-2 mt-1">
                 {room.equipment.lim && <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-100"><Tv size={12}/> LIM</span>}
+                {room.equipment.projector && <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-amber-100"><Projector size={12}/> Proiettore</span>}
                 {room.equipment.wifi && <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-green-100"><Wifi size={12}/> WiFi</span>}
+                {room.equipment.wired && <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-emerald-100"><Network size={12}/> LAN</span>}
+                {room.equipment.whiteboard && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200"><PenTool size={12}/> Lavagna</span>}
                 {room.equipment.pc && <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1.5 rounded-lg text-xs font-black border border-indigo-100"><Monitor size={12}/> {room.equipment.pcCount} PC</span>}
+                {!Object.values(room.equipment).some(val => val === true || val > 0) && <span className="text-slate-400 italic text-sm font-medium">Nessuna dotazione.</span>}
               </div>
             </div>
             <button onClick={() => { setEditingRoom(room); setFormData(room); setIsModalOpen(true); }} className="w-full sm:w-auto p-3 sm:p-3.5 bg-indigo-50 rounded-xl text-indigo-600 hover:bg-indigo-100 transition-colors font-bold text-sm flex items-center justify-center gap-2 shrink-0">
@@ -1040,17 +982,20 @@ function RoomsManagerView({ rooms }) {
             </div>
           </div>
           <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-            <label className="block text-sm font-black text-slate-900 mb-5 border-b border-slate-100 pb-3">Seleziona Dotazioni</label>
+            <label className="block text-sm font-black text-slate-900 mb-5 border-b border-slate-100 pb-3">Seleziona Dotazioni Tecniche</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
-              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300" checked={formData.equipment.lim} onChange={e => setFormData({...formData, equipment: {...formData.equipment, lim: e.target.checked}})} /><span className="text-sm font-bold text-slate-700">LIM Interattiva</span></label>
-              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300" checked={formData.equipment.wifi} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wifi: e.target.checked}})} /><span className="text-sm font-bold text-slate-700">Rete WiFi</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.lim} onChange={e => setFormData({...formData, equipment: {...formData.equipment, lim: e.target.checked}})} /><span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 flex items-center gap-2.5"><Tv size={18} className="text-slate-400"/> LIM Interattiva</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.projector} onChange={e => setFormData({...formData, equipment: {...formData.equipment, projector: e.target.checked}})} /><span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 flex items-center gap-2.5"><Projector size={18} className="text-slate-400"/> Videoproiettore</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.wifi} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wifi: e.target.checked}})} /><span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 flex items-center gap-2.5"><Wifi size={18} className="text-slate-400"/> Rete WiFi</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.wired} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wired: e.target.checked}})} /><span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 flex items-center gap-2.5"><Network size={18} className="text-slate-400"/> LAN Cablata</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.whiteboard} onChange={e => setFormData({...formData, equipment: {...formData.equipment, whiteboard: e.target.checked}})} /><span className="text-sm font-bold text-slate-700 group-hover:text-slate-900 flex items-center gap-2.5"><PenTool size={18} className="text-slate-400"/> Lavagna Classica</span></label>
             </div>
             <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center gap-5">
-              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300" checked={formData.equipment.pc} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pc: e.target.checked}})} /><span className="text-base font-black text-slate-800">PC Desktop in Aula</span></label>
+              <label className="flex items-center gap-3.5 cursor-pointer group"><input type="checkbox" className="w-5 h-5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500" checked={formData.equipment.pc} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pc: e.target.checked}})} /><span className="text-base font-black text-slate-800 flex items-center gap-2.5"><Monitor size={20} className={formData.equipment.pc ? "text-indigo-600" : "text-slate-400"}/> PC Desktop in Aula</span></label>
               {formData.equipment.pc && (
-                <div className="flex items-center gap-3 sm:ml-auto bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-3 sm:ml-auto bg-slate-50 p-3 rounded-xl border border-slate-200 animate-in fade-in slide-in-from-left-4">
                   <span className="text-sm font-bold text-slate-600">Quantità:</span>
-                  <input type="number" min="1" required className="w-24 bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2 text-sm font-black focus:ring-2 focus:ring-indigo-500 outline-none text-center" value={formData.equipment.pcCount || ''} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pcCount: e.target.value}})} placeholder="0" />
+                  <input type="number" min="1" required className="w-24 bg-white border border-slate-300 text-slate-900 rounded-lg px-3 py-2 text-sm font-black focus:ring-2 focus:ring-indigo-500 outline-none text-center shadow-sm" value={formData.equipment.pcCount || ''} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pcCount: e.target.value}})} placeholder="0" />
                 </div>
               )}
             </div>
