@@ -19,9 +19,9 @@ function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
       <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 animate-in fade-in zoom-in-95 duration-200">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
           <h2 className="text-xl font-bold tracking-tight text-slate-800">{title}</h2>
           <button onClick={onClose} className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600">
             <X size={20} />
@@ -114,7 +114,7 @@ export default function App() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             {loginError && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-100 text-center">
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-100 text-center animate-in fade-in zoom-in duration-200">
                 {loginError}
               </div>
             )}
@@ -174,7 +174,9 @@ export default function App() {
           <div className="flex items-center justify-between mb-4 px-2">
             <div className="flex flex-col">
               <span className="text-sm font-bold text-slate-900">{currentUser.name}</span>
-              <span className="text-xs text-green-600 font-semibold">Online (Cloud)</span>
+              <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online (Cloud)
+              </span>
             </div>
           </div>
           <button onClick={() => setCurrentUser(null)} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors shadow-sm">
@@ -189,7 +191,7 @@ export default function App() {
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
               {currentView === 'calendar' ? 'Disponibilità Aule' : currentView === 'rooms' ? 'Gestione Parco Aule' : 'Controllo Accessi'}
             </h2>
-            <p className="text-sm font-medium text-slate-500">Sistema operativo connesso e sincronizzato.</p>
+            <p className="text-sm font-medium text-slate-500">Sistema operativo connesso e sincronizzato in tempo reale.</p>
           </div>
         </header>
 
@@ -245,17 +247,17 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
           <h2 className="text-xl sm:text-2xl font-bold capitalize text-slate-800 flex-1 sm:flex-none">
             {format(currentDate, "MMMM yyyy", { locale: it })}
           </h2>
-          <div className="flex bg-white rounded-lg shadow-sm border border-slate-200">
-            <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-l-lg transition-colors"><ChevronLeft size={20} /></button>
+          <div className="flex bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <button onClick={() => setCurrentDate(subMonths(currentDate, 1))} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"><ChevronLeft size={20} /></button>
             <div className="w-px bg-slate-200"></div>
-            <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-r-lg transition-colors"><ChevronRight size={20} /></button>
+            <button onClick={() => setCurrentDate(addMonths(currentDate, 1))} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"><ChevronRight size={20} /></button>
           </div>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-none">
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <select value={filterRoom} onChange={(e) => setFilterRoom(e.target.value)} className="w-full sm:w-auto appearance-none bg-white rounded-lg border border-slate-300 py-2 pl-10 pr-10 text-sm font-semibold text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none shadow-sm">
+            <select value={filterRoom} onChange={(e) => setFilterRoom(e.target.value)} className="w-full sm:w-auto appearance-none bg-white rounded-lg border border-slate-300 py-2 pl-10 pr-10 text-sm font-semibold text-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none shadow-sm transition-shadow">
               <option value="all">Filtra: Tutte le Aule</option>
               {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
@@ -289,7 +291,7 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
             return (
               <div key={day.toString()} onClick={() => handleDayClick(day)} className={classNames("bg-white min-h-[100px] p-2 sm:p-3 transition-colors cursor-pointer group relative flex flex-col hover:bg-indigo-50/30", !isSameMonth(day, currentDate) && "bg-slate-50/50 opacity-60", isTodayDate && "bg-indigo-50/50")}>
                 <div className="flex items-start justify-between shrink-0 mb-1">
-                  <span className={classNames("flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold shadow-sm", isTodayDate ? "bg-indigo-600 text-white" : "text-slate-700 bg-white group-hover:text-indigo-700 border border-transparent group-hover:border-indigo-100")}>
+                  <span className={classNames("flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold shadow-sm transition-colors", isTodayDate ? "bg-indigo-600 text-white" : "text-slate-700 bg-white group-hover:text-indigo-700 border border-transparent group-hover:border-indigo-100")}>
                     {format(day, "d")}
                   </span>
                 </div>
@@ -298,7 +300,7 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
                     const room = rooms.find(r => r.id === booking.classroomId);
                     const isOwnBooking = booking.userId === currentUser.id;
                     return (
-                      <div key={booking.id} onClick={(e) => handleViewBookings(day, e)} className={classNames("px-2 py-1.5 rounded-md text-xs font-semibold border flex flex-col gap-0.5", isOwnBooking ? "bg-indigo-100 text-indigo-800 border-indigo-200" : "bg-slate-100 text-slate-700 border-slate-200")}>
+                      <div key={booking.id} onClick={(e) => handleViewBookings(day, e)} className={classNames("px-2 py-1.5 rounded-md text-xs font-semibold border flex flex-col gap-0.5 shadow-sm transition-transform hover:scale-[1.02]", isOwnBooking ? "bg-indigo-100 text-indigo-800 border-indigo-200" : "bg-slate-100 text-slate-700 border-slate-200")}>
                         <span className="truncate">{booking.startTime} - {room?.name}</span>
                         <span className="truncate opacity-80">{booking.courseName}</span>
                       </div>
@@ -319,11 +321,11 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={selectedDate ? format(selectedDate, "EEEE d MMMM yyyy", { locale: it }) : "Dettagli"}>
         {selectedDate && (
           <div className="mt-4">
-            <div className="flex border-b border-slate-200 mb-4">
-              <button onClick={() => setActiveTab('new')} className={classNames("px-4 py-2 text-sm font-bold border-b-2 transition-colors", activeTab === 'new' ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700")}>
+            <div className="flex border-b border-slate-200 mb-6">
+              <button onClick={() => setActiveTab('new')} className={classNames("px-4 py-3 text-sm font-bold border-b-2 transition-colors", activeTab === 'new' ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700")}>
                 Nuova Prenotazione
               </button>
-              <button onClick={() => setActiveTab('list')} className={classNames("px-4 py-2 text-sm font-bold border-b-2 transition-colors", activeTab === 'list' ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700")}>
+              <button onClick={() => setActiveTab('list')} className={classNames("px-4 py-3 text-sm font-bold border-b-2 transition-colors", activeTab === 'list' ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700")}>
                 Vedi Prenotazioni ({bookings.filter(b => b.date === format(selectedDate, "yyyy-MM-dd")).length})
               </button>
             </div>
@@ -331,9 +333,12 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
             {activeTab === 'new' ? (
               <BookingForm selectedDate={selectedDate} onClose={() => setIsModalOpen(false)} currentUser={currentUser} bookings={bookings} rooms={rooms} />
             ) : (
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
                 {bookings.filter(b => b.date === format(selectedDate, "yyyy-MM-dd")).length === 0 ? (
-                  <p className="text-slate-500 text-center py-6">Nessuna prenotazione per questo giorno.</p>
+                  <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                     <CalendarDays size={32} className="mx-auto text-slate-300 mb-3" />
+                     <p className="text-slate-500 font-medium">Nessuna prenotazione per questo giorno.</p>
+                  </div>
                 ) : (
                   bookings.filter(b => b.date === format(selectedDate, "yyyy-MM-dd")).sort((a,b) => a.startTime.localeCompare(b.startTime)).map(booking => {
                     const room = rooms.find(r => r.id === booking.classroomId);
@@ -341,19 +346,21 @@ function CalendarView({ currentUser, users, bookings, rooms }) {
                     const canDelete = currentUser.role === 'Master' || currentUser.id === booking.userId;
 
                     return (
-                      <div key={booking.id} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col gap-2 relative">
+                      <div key={booking.id} className="bg-white border border-slate-200 shadow-sm p-4 rounded-xl flex flex-col gap-3 relative transition-all hover:shadow-md">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-bold text-slate-900">{booking.courseName}</h4>
-                            <p className="text-sm text-indigo-700 font-semibold">{booking.startTime} - {booking.endTime}</p>
+                            <h4 className="font-bold text-slate-900 text-lg">{booking.courseName}</h4>
+                            <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-sm font-bold border border-indigo-100 mt-1.5">
+                              {booking.startTime} - {booking.endTime}
+                            </span>
                           </div>
                           {canDelete && (
-                            <button onClick={() => handleDeleteBooking(booking.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg text-sm font-bold transition-colors">Elimina</button>
+                            <button onClick={() => handleDeleteBooking(booking.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg text-sm font-bold transition-colors border border-transparent hover:border-red-100">Elimina</button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm text-slate-600 mt-2">
-                          <div className="flex items-center gap-1.5"><DoorOpen size={14} className="text-slate-400"/> {room?.name || 'Aula rimossa'}</div>
-                          <div className="flex items-center gap-1.5"><Users size={14} className="text-slate-400"/> {author?.name || "Utente rimosso"}</div>
+                        <div className="grid grid-cols-2 gap-2 text-sm text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                          <div className="flex items-center gap-2 font-medium"><DoorOpen size={16} className="text-slate-400"/> {room?.name || 'Aula rimossa'}</div>
+                          <div className="flex items-center gap-2 font-medium"><Users size={16} className="text-slate-400"/> {author?.name || "Utente rimosso"}</div>
                         </div>
                       </div>
                     );
@@ -441,7 +448,7 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
         return;
       }
 
-      // Salvataggio effettivo su Firestore
+      // Salvataggio su Firestore
       for (let i = 0; i < validDates.length; i++) {
         const dateStr = format(validDates[i], "yyyy-MM-dd");
         await addDoc(collection(db, "bookings"), {
@@ -471,32 +478,36 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {formError && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-100 flex items-center gap-2">
+        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-100 flex items-center gap-2 animate-in fade-in">
           <ShieldAlert size={16} className="shrink-0" /> <span>{formError}</span>
         </div>
       )}
       
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-1">Nome Corso</label>
-        <input required type="text" className="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none" value={formData.courseName} onChange={e => setFormData({...formData, courseName: e.target.value})} />
+        <input required type="text" className="w-full bg-white border border-slate-300 text-slate-900 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.courseName} onChange={e => setFormData({...formData, courseName: e.target.value})} />
       </div>
       
       <div>
         <label className="block text-sm font-semibold text-slate-700 mb-1">Seleziona Aula</label>
-        <select required className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none" value={formData.classroomId} onChange={e => setFormData({...formData, classroomId: e.target.value})}>
+        <select required className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.classroomId} onChange={e => setFormData({...formData, classroomId: e.target.value})}>
           <option value="">Scegli un'aula disponibile...</option>
           {rooms.map(r => <option key={r.id} value={r.id}>{r.name} (Max {r.capacity})</option>)}
         </select>
         
         {selectedRoomDetails && (
-          <div className="mt-3 bg-indigo-50 border border-indigo-100 rounded-lg p-3">
+          <div className="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-3 animate-in fade-in slide-in-from-top-2">
              <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold text-indigo-900 uppercase flex items-center gap-1">
-                <Tv size={12} className="text-indigo-600" /> Dotazioni incluse:
+              <span className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                <Tv size={12} /> Dotazioni incluse:
               </span>
               <div className="flex flex-wrap gap-2">
-                {selectedRoomDetails.equipment.lim && <span className="inline-flex items-center gap-1 bg-white text-indigo-700 px-2 py-1 rounded-md text-xs font-semibold border border-indigo-200"><Tv size={12}/> LIM</span>}
-                {selectedRoomDetails.equipment.wifi && <span className="inline-flex items-center gap-1 bg-white text-indigo-700 px-2 py-1 rounded-md text-xs font-semibold border border-indigo-200"><Wifi size={12}/> WiFi</span>}
+                {selectedRoomDetails.equipment.lim && <span className="inline-flex items-center gap-1 bg-white text-slate-700 px-2 py-1 rounded-md text-xs font-medium border border-slate-200"><Tv size={12}/> LIM</span>}
+                {selectedRoomDetails.equipment.projector && <span className="inline-flex items-center gap-1 bg-white text-slate-700 px-2 py-1 rounded-md text-xs font-medium border border-slate-200"><Monitor size={12}/> Proiettore</span>}
+                {selectedRoomDetails.equipment.wifi && <span className="inline-flex items-center gap-1 bg-white text-slate-700 px-2 py-1 rounded-md text-xs font-medium border border-slate-200"><Wifi size={12}/> WiFi</span>}
+                {selectedRoomDetails.equipment.wired && <span className="inline-flex items-center gap-1 bg-white text-slate-700 px-2 py-1 rounded-md text-xs font-medium border border-slate-200"><Network size={12}/> LAN</span>}
+                {selectedRoomDetails.equipment.whiteboard && <span className="inline-flex items-center gap-1 bg-white text-slate-700 px-2 py-1 rounded-md text-xs font-medium border border-slate-200"><PenTool size={12}/> Lavagna</span>}
+                {selectedRoomDetails.equipment.pc && <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-xs font-bold border border-indigo-100"><Monitor size={12}/> {selectedRoomDetails.equipment.pcCount} PC</span>}
               </div>
             </div>
           </div>
@@ -506,48 +517,32 @@ function BookingForm({ selectedDate, onClose, currentUser, bookings, rooms }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Ora Inizio</label>
-          <input required type="time" className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 outline-none" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} />
+          <input required type="time" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 outline-none shadow-sm focus:ring-2 focus:ring-indigo-500" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1">Ora Fine</label>
-          <input required type="time" className="w-full bg-slate-50 border border-slate-300 rounded-lg px-4 py-2.5 outline-none" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} />
+          <input required type="time" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 outline-none shadow-sm focus:ring-2 focus:ring-indigo-500" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} />
         </div>
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2"><CalendarDays size={16}/> Periodo</h4>
+        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2"><CalendarDays size={16} className="text-indigo-600"/> Ripetizione</h4>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Dal Giorno</label>
-            <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Dal</label>
+            <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Al Giorno</label>
-            <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Al</label>
+            <input required type="date" className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
-        </div>
-        <div className="space-y-3 pt-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300" checked={excludeWeekends} onChange={e => setExcludeWeekends(e.target.checked)} />
-            <span className="text-sm font-medium text-slate-700">Escludi Weekend</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300" checked={excludeSpecific} onChange={e => setExcludeSpecific(e.target.checked)} />
-            <span className="text-sm font-medium text-slate-700">Escludi date specifiche</span>
-          </label>
-          {excludeSpecific && (
-            <div className="flex gap-2 pl-6">
-              <input type="date" className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-sm" value={tempExcludeDate} onChange={e => setTempExcludeDate(e.target.value)} />
-              <button type="button" onClick={handleAddExcludeDate} className="bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded-lg text-sm font-bold">Aggiungi</button>
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="pt-4 border-t flex justify-end gap-3 mt-6">
-        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg">Annulla</button>
-        <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md flex items-center gap-2">
-          {isSubmitting ? 'Salvataggio in cloud...' : 'Conferma'}
+      <div className="pt-4 flex justify-end gap-3 mt-6">
+        <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Annulla</button>
+        <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md flex items-center gap-2 transition-colors">
+          {isSubmitting ? 'Salvataggio...' : 'Conferma'}
         </button>
       </div>
     </form>
@@ -583,21 +578,27 @@ function UsersManagerView({ users, currentUser, setCurrentUser }) {
         <div>
           <h3 className="font-bold text-lg text-slate-900">Gestione Utenti</h3>
         </div>
-        <button onClick={() => { setEditingUser(null); setFormData(defaultForm); setIsModalOpen(true); }} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
-          <Plus size={16} /> Nuovo
+        <button onClick={() => { setEditingUser(null); setFormData(defaultForm); setIsModalOpen(true); }} className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm">
+          <Plus size={16} /> Nuovo Utente
         </button>
       </div>
-      <div className="overflow-x-auto p-4">
-        <div className="grid gap-3">
+      <div className="overflow-x-auto p-6">
+        <div className="grid gap-4">
           {users.map(user => (
-            <div key={user.id} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div key={user.id} className="flex justify-between items-center bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <div>
-                <span className="font-bold">{user.name}</span> <span className="text-xs ml-2 bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{user.role}</span>
-                <p className="text-sm text-slate-500 mt-1">User: {user.username} | Pass: {user.password}</p>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-slate-900 text-lg">{user.name}</span> 
+                  <span className={classNames("text-xs font-bold px-2.5 py-1 rounded-md border", user.role === 'Master' ? "bg-red-50 text-red-700 border-red-100" : user.role === 'Editor' ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-green-50 text-green-700 border-green-100")}>{user.role}</span>
+                </div>
+                <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 font-medium">
+                  <span className="flex items-center gap-1.5"><Users size={14}/> {user.username}</span>
+                  <span className="flex items-center gap-1.5"><Key size={14}/> {user.password}</span>
+                </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { setEditingUser(user); setFormData(user); setIsModalOpen(true); }} className="p-2 bg-white rounded shadow text-indigo-600"><Edit2 size={16} /></button>
-                {user.id !== currentUser.id && <button onClick={() => handleDelete(user.id)} className="p-2 bg-white rounded shadow text-red-600"><Trash2 size={16}/></button>}
+                <button onClick={() => { setEditingUser(user); setFormData(user); setIsModalOpen(true); }} className="p-2.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors"><Edit2 size={16} /></button>
+                {user.id !== currentUser.id && <button onClick={() => handleDelete(user.id)} className="p-2.5 bg-red-50 rounded-lg text-red-600 hover:bg-red-100 transition-colors"><Trash2 size={16}/></button>}
               </div>
             </div>
           ))}
@@ -605,31 +606,32 @@ function UsersManagerView({ users, currentUser, setCurrentUser }) {
       </div>
       
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingUser ? "Modifica Utente" : "Nuovo Utente"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
            <div>
-            <label className="block text-sm font-semibold mb-1">Nome Completo</label>
-            <input required type="text" className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            <label className="block text-sm font-semibold mb-1 text-slate-700">Nome Completo</label>
+            <input required type="text" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Es. Mario Rossi" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-1">Username</label>
-              <input required type="text" className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
+              <label className="block text-sm font-semibold mb-1 text-slate-700">Username</label>
+              <input required type="text" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
             </div>
             <div>
-              <label className="block text-sm font-semibold mb-1">Password</label>
-              <input required type="text" className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+              <label className="block text-sm font-semibold mb-1 text-slate-700">Password</label>
+              <input required type="text" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-1">Ruolo</label>
-            <select className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-              <option value="Visual">Visual</option>
-              <option value="Editor">Editor</option>
-              <option value="Master">Master</option>
+            <label className="block text-sm font-semibold mb-1 text-slate-700">Ruolo</label>
+            <select className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+              <option value="Visual">Visual (Sola Lettura)</option>
+              <option value="Editor">Editor (Prenotazioni)</option>
+              <option value="Master">Master (Amministratore)</option>
             </select>
           </div>
-          <div className="flex justify-end gap-3 mt-4">
-             <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salva</button>
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+             <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Annulla</button>
+             <button type="submit" className="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">Salva Utente</button>
           </div>
         </form>
       </Modal>
@@ -637,16 +639,40 @@ function UsersManagerView({ users, currentUser, setCurrentUser }) {
   );
 }
 
-// --- ROOMS MANAGER VIEW ---
+// --- ROOMS MANAGER VIEW (Refactored to match UI Screenshot) ---
 function RoomsManagerView({ rooms }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
-  const defaultForm = { name: '', capacity: '', equipment: { lim: false, wifi: false } };
+  
+  // Ripristinata la struttura dati completa per l'equipment
+  const defaultForm = { 
+    name: '', 
+    capacity: '', 
+    equipment: { 
+      lim: false, 
+      projector: false, 
+      wifi: false, 
+      wired: false, 
+      whiteboard: false, 
+      pc: false, 
+      pcCount: 0 
+    } 
+  };
   const [formData, setFormData] = useState(defaultForm);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const dataToSave = { ...formData, capacity: parseInt(formData.capacity) };
+    
+    // Parsing rigoroso per garantire che i numeri vengano salvati come Integer in Firestore
+    const dataToSave = { 
+      ...formData, 
+      capacity: parseInt(formData.capacity) || 0,
+      equipment: {
+        ...formData.equipment,
+        pcCount: formData.equipment.pc ? (parseInt(formData.equipment.pcCount) || 0) : 0
+      }
+    };
+
     if (editingRoom) {
       await updateDoc(doc(db, "rooms", editingRoom.id), dataToSave);
     } else {
@@ -658,42 +684,107 @@ function RoomsManagerView({ rooms }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-        <h3 className="font-bold text-lg text-slate-900">Gestione Aule</h3>
-        <button onClick={() => { setEditingRoom(null); setFormData(defaultForm); setIsModalOpen(true); }} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
-          <Plus size={16} /> Nuova
+        <div>
+          <h3 className="font-bold text-lg text-slate-900">Gestione Parco Aule</h3>
+          <p className="text-sm text-slate-500 mt-1">Configura le aule disponibili e le loro dotazioni tecniche.</p>
+        </div>
+        <button onClick={() => { setEditingRoom(null); setFormData(defaultForm); setIsModalOpen(true); }} className="bg-slate-900 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm">
+          <Plus size={18} /> Nuova Aula
         </button>
       </div>
-      <div className="p-4 grid gap-3">
+
+      <div className="p-6 grid gap-4">
         {rooms.map(room => (
-          <div key={room.id} className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <span className="font-bold">{room.name}</span> <span className="text-xs text-slate-500 ml-2">({room.capacity} posti)</span>
+          <div key={room.id} className="flex justify-between items-center bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-lg text-slate-900">{room.name}</span> 
+                <span className="text-xs font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md border border-slate-200">
+                  Capienza max: {room.capacity}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {room.equipment.lim && <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold border border-blue-100"><Tv size={12}/> LIM</span>}
+                {room.equipment.projector && <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2 py-1 rounded-md text-xs font-bold border border-amber-100"><Monitor size={12}/> Proiettore</span>}
+                {room.equipment.wifi && <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-1 rounded-md text-xs font-bold border border-green-100"><Wifi size={12}/> WiFi</span>}
+                {room.equipment.wired && <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold border border-emerald-100"><Network size={12}/> LAN</span>}
+                {room.equipment.whiteboard && <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-2 py-1 rounded-md text-xs font-bold border border-slate-200"><PenTool size={12}/> Lavagna</span>}
+                {room.equipment.pc && <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-xs font-bold border border-purple-100"><Monitor size={12}/> {room.equipment.pcCount} PC</span>}
+                {!Object.values(room.equipment).some(val => val === true || val > 0) && <span className="text-slate-400 italic text-xs font-medium">Nessuna dotazione tecnica</span>}
+              </div>
             </div>
-            <button onClick={() => { setEditingRoom(room); setFormData(room); setIsModalOpen(true); }} className="p-2 bg-white rounded shadow text-indigo-600"><Edit2 size={16} /></button>
+            <button onClick={() => { setEditingRoom(room); setFormData(room); setIsModalOpen(true); }} className="p-2.5 bg-indigo-50 rounded-lg text-indigo-600 hover:bg-indigo-100 transition-colors font-medium text-sm flex items-center gap-2">
+              <Edit2 size={16} /> Modifica
+            </button>
           </div>
         ))}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingRoom ? "Modifica Aula" : "Nuova Aula"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold mb-1">Nome Aula</label>
-            <input required type="text" className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-slate-700">Nome Spazio/Aula</label>
+              <input required type="text" placeholder="Es. Laboratorio Lingue" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1 text-slate-700">Capienza Max</label>
+              <input required type="number" min="1" placeholder="Es. 25" className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm transition-shadow" value={formData.capacity} onChange={e => setFormData({...formData, capacity: e.target.value})} />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold mb-1">Capienza</label>
-            <input required type="number" className="w-full bg-slate-50 border rounded-lg px-3 py-2" value={formData.capacity} onChange={e => setFormData({...formData, capacity: e.target.value})} />
+
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <label className="block text-sm font-bold text-slate-800 mb-5">Seleziona Dotazioni Tecniche</label>
+            
+            {/* Griglia esatta come nello screenshot */}
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.lim} onChange={e => setFormData({...formData, equipment: {...formData.equipment, lim: e.target.checked}})} />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2"><Tv size={18} className="text-slate-400"/> LIM</span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.projector} onChange={e => setFormData({...formData, equipment: {...formData.equipment, projector: e.target.checked}})} />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2"><Monitor size={18} className="text-slate-400"/> Videoproiettore</span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.wifi} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wifi: e.target.checked}})} />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2"><Wifi size={18} className="text-slate-400"/> WiFi</span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.wired} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wired: e.target.checked}})} />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2"><Network size={18} className="text-slate-400"/> LAN Cablata</span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.whiteboard} onChange={e => setFormData({...formData, equipment: {...formData.equipment, whiteboard: e.target.checked}})} />
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 flex items-center gap-2"><PenTool size={18} className="text-slate-400"/> Lavagna Classica</span>
+              </label>
+            </div>
+
+            {/* Sezione separata per i Computer con Progressive Disclosure */}
+            <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center gap-4">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 transition-colors" checked={formData.equipment.pc} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pc: e.target.checked}})} />
+                <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-700 transition-colors flex items-center gap-2"><Monitor size={18} className={formData.equipment.pc ? "text-indigo-600" : "text-slate-400"}/> Computer in Aula</span>
+              </label>
+              
+              {formData.equipment.pc && (
+                <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                  <span className="text-sm font-medium text-slate-500">Specifica numero:</span>
+                  <input type="number" min="1" required className="w-24 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg px-3 py-1.5 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm" value={formData.equipment.pcCount || ''} onChange={e => setFormData({...formData, equipment: {...formData.equipment, pcCount: e.target.value}})} placeholder="Es. 20" />
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={formData.equipment.lim} onChange={e => setFormData({...formData, equipment: {...formData.equipment, lim: e.target.checked}})} /> LIM
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={formData.equipment.wifi} onChange={e => setFormData({...formData, equipment: {...formData.equipment, wifi: e.target.checked}})} /> WiFi
-            </label>
-          </div>
-          <div className="flex justify-end gap-3 mt-4">
-             <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salva su Cloud</button>
+
+          <div className="flex justify-end gap-3 mt-8 pt-4">
+             <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Annulla</button>
+             <button type="submit" className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
+               {editingRoom ? "Salva Modifiche" : "Crea Aula"}
+             </button>
           </div>
         </form>
       </Modal>
